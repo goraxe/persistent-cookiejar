@@ -67,6 +67,9 @@ type Options struct {
 	// Filename holds the file to use for storage of the cookies.
 	// If it is empty, the value of DefaultCookieFile will be used.
 	Filename string
+
+	// ForcePersistent saves cookies even if they do not have the persistent flag
+	ForcePersistent bool
 }
 
 // Jar implements the http.CookieJar interface from the net/http package.
@@ -78,6 +81,9 @@ type Jar struct {
 
 	// mu locks the remaining fields.
 	mu sync.Mutex
+
+	// forces saving non persistent cookies
+	forcePersistent bool
 
 	// entries is a set of entries, keyed by their eTLD+1 and subkeyed by
 	// their name/domain/path.
@@ -112,6 +118,11 @@ func newAtTime(o *Options, now time.Time) (*Jar, error) {
 	if err := jar.load(); err != nil {
 		return nil, errgo.Notef(err, "cannot load cookies")
 	}
+
+	if o.ForcePersistent {
+		jar.forcePersistent = o.ForcePersistent
+	}
+
 	jar.deleteExpired(now)
 	return jar, nil
 }
